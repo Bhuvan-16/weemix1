@@ -20,7 +20,8 @@ SPOTIPY_REDIRECT_URI = os.environ.get("SPOTIPY_REDIRECT_URI")
 if not (SPOTIPY_CLIENT_ID and SPOTIPY_CLIENT_SECRET and SPOTIPY_REDIRECT_URI):
     raise RuntimeError("Missing one of SPOTIPY_CLIENT_ID / SPOTIPY_CLIENT_SECRET / SPOTIPY_REDIRECT_URI in environment")
 
-scope = "user-read-private"
+scope = "user-read-private,user-top-read,playlist-read-private"
+
 
 @app.route('/')
 def index():
@@ -161,7 +162,16 @@ def chat():
         "energetic": "dance"
     }
     genre = mood_genres.get(mood, "pop")
-    results = sp.recommendations(seed_genres=[genre], limit=5)
+    results = sp.recommendations(seed_genres=[genre], limit=5, country='US', min_popularity=50)
+    tracks = results.get("tracks", [])
+    if not tracks:
+    # fallback using playlist search
+    playlist = sp.search(q=f"{mood} hits", type="playlist", limit=1)
+    if playlist["playlists"]["items"]:
+        pl_id = playlist["playlists"]["items"][0]["id"]
+        pl_tracks = sp.playlist_tracks(pl_id, limit=5)
+        tracks = [t["track"] for t in pl_tracks["items"] if t.get("track")]
+
 
     songs = []
     for track in results['tracks']:
