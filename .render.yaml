@@ -1,0 +1,8 @@
+
+# Optional: Render service definition sample (not required)
+services:
+  - name: weemix
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
